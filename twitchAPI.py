@@ -3,9 +3,12 @@ from datetime import datetime, timedelta
 import os
 from bs4 import BeautifulSoup
 import re
+from pprint import pprint
 import html as html_module
 
 class TwitchAPI():
+
+    debug = True
 
     def __init__(self):
         self.headers = None
@@ -74,6 +77,8 @@ class TwitchAPI():
         Fetch page_url and try to find a direct .mp4 or .m3u8 URL.
         Returns a URL string or raises ValueError if none found.
         """
+        if self.debug:
+            print("Searching for a video in the url : " + page_url)
         s = requests.Session()
         # Use provided headers (e.g. Authorization/Client-Id) if present
         if headers:
@@ -84,6 +89,8 @@ class TwitchAPI():
         resp = s.get(page_url, timeout=timeout)
         resp.raise_for_status()
         html = resp.text
+        if self.debug:
+            print(html)
         '''
         soup = BeautifulSoup(html, 'html.parser')
 
@@ -118,8 +125,17 @@ class TwitchAPI():
         '''
 
         #simply use only re module to search for video url:
-        videotag = re.search("<video></video>", html)
-        return None
+        videotag = None
+        #videotags = re.search("<video .*\></video>", html)
+        videotags = re.search("https://", html)
+        if self.debug:
+            print("found videos html tag :" + str(videotags))
+        videotag = videotags[0]
+        if videotag:
+            url = videotag.split('"')[5]
+            return url
+        else:
+            return ValueError("No video found")
 
          
     def _normalize_url(self, url, base_page):
@@ -138,14 +154,18 @@ class TwitchAPI():
         return url
 
     def downloadClip(self, clip, path): # clip est le dictionnaire renvoyé dans le json
-        print(clip)  #TODO enlever
+        #print(clip)  # enlever
         # récupération des variables
-        url = self.extract_direct_video_url(self, clip['url'])
+        url=None
+        try:
+            url = self.extract_direct_video_url(self, clip['url'])
+        except ValueError as e:
+            print(f"Erreur: {e}")
+            return
         date = clip['created_at']
         streamer = clip['broadcaster_name']
         titre = clip['title']
         duration = clip['duration']
-
         nomclip = streamer.replace('_',' ') + "_" + titre.replace('/', '|').replace('_',' ') + "_" + date + "_" + str(duration) + "_.mp4"
 
         # chemins relatifs au projet (utilise base_dir pour être cohérent avec upload.py)

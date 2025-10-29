@@ -28,7 +28,7 @@ dir_to_edit = os.path.join(base_dir, 'clips/')
 ##Twitch
 client_secret_twitch = os.path.join(base_dir, 'client_secret_twitch.json')
 streamers=["ponce","antoinedaniel","zerator","hortyunderscore","angledroit","etoiles","mynthos","joueur_du_grenier","bagherajones"]
-clip_per_streamer = 4
+clip_per_streamer = 1
 games=[] #["Lethal Company",'Minecraft']
 clip_per_game = 0
 days = 7
