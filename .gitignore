@@ -1,0 +1,7 @@
+*secret*.json
+.venv/
+clips/*.mp4
+clips/corrupt/*
+shorts/*.mp4
+__pycache__
+token.json

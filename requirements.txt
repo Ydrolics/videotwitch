@@ -1,0 +1,15 @@
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+python-dotenv
+google-auth
+requests
+packaging
+moviepy==1.0.3
+numpy
+imageio
+Pillow
+decorator
+proglog
+tqdm
+beautifulsoup4
