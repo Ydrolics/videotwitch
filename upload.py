@@ -28,7 +28,7 @@ dir_to_edit = os.path.join(base_dir, 'clips/')
 ##Twitch
 client_secret_twitch = os.path.join(base_dir, 'client_secret_twitch.json')
 streamers=["ponce","antoinedaniel","zerator","hortyunderscore","angledroit","etoiles","mynthos","joueur_du_grenier","bagherajones"]
-clip_per_streamer = 1
+clip_per_streamer = 4
 games=[] #["Lethal Company",'Minecraft']
 clip_per_game = 0
 days = 7
@@ -189,26 +189,8 @@ def makeclips(input_path, output_path):
         print("All videos edited !!!\n")
 
 if __name__ == "__main__":
-    if debug:
-        print("Twitch authentification ...\n")
-    twitch_authenticate()
-
-    #count the number of clips not exported yet
-    nclips = sum(1 for file in os.listdir(dir_to_upload) if file.endswith(".mp4"))
-    if debug:
-        print("Getting " + str(10-nclips) + "clips\n")
-
-    #get enough clips to reach 10 clips
-    for clip in get_clips(max=10-nclips):
-        twapi.downloadClip(twapi, clip, dir_to_edit)
-    
-    if debug:
-        print("Starting video editing ...\n")
-    #make videos
-    makeclips(dir_to_edit, dir_to_upload)
-
-    if debug:
-        print("Starting uploading ...")
-    #upload to youtube
-    upload_all()
+    # Instantiate TwitchAPI and call instance method. Avoid passing the class as 'self'.
+    tw = twapi()
+    test_url = 'https://clips.twitch.tv/embed?clip=GracefulVenomousFrogFrankerZ-Da8y1OoN2g19G2r-&parent=meta.tag'
+    tw.download_video(test_url, os.path.join(dir_to_edit, "test.mp4"))
 

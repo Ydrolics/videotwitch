@@ -91,38 +91,6 @@ class TwitchAPI():
         html = resp.text
         if self.debug:
             print(html)
-        '''
-        soup = BeautifulSoup(html, 'html.parser')
-
-        # 1) <video src="..."> or <video><source src="..."></video>
-        video = soup.find('video')
-        if video:
-            src = video.get('src')
-            if src:
-                return self._normalize_url(html_module.unescape(src), page_url)
-            for source in video.find_all('source'):
-                src = source.get('src')
-                if src:
-                    return self._normalize_url(html_module.unescape(src), page_url)
-
-        # 2) open graph meta tag like <meta property="og:video" content="...">
-        og = soup.find('meta', property='og:video')
-        if og and og.get('content'):
-            return self._normalize_url(html_module.unescape(og['content']), page_url)
-
-        # 3) Try common JS keys that sometimes contain URLs (quick regex)
-        # Find first https://...mp4 or https://...m3u8 occurrence
-        m = re.search(r'https?://[^\'"\s>]+\.mp4[^\'"\s>]*', html)
-        if m:
-            return self._normalize_url(html_module.unescape(m.group(0)), page_url)
-
-        m = re.search(r'https?://[^\'"\s>]+\.m3u8[^\'"\s>]*', html)
-        if m:
-            return self._normalize_url(html_module.unescape(m.group(0)), page_url)
-
-        # Nothing found
-        raise ValueError("No direct mp4/m3u8 URL found on page")
-        '''
 
         #simply use only re module to search for video url:
         videotag = None
@@ -137,7 +105,31 @@ class TwitchAPI():
         else:
             return ValueError("No video found")
 
-         
+    def download_video(self, url, path):
+        if self.debug:
+            print("try downloading video from url " + str(url))
+        try:
+            with requests.get(url, stream=True, timeout=60) as r:
+                r.raise_for_status()
+                # ensure destination directory exists (create parent dir of file)
+                dir_name = os.path.dirname(path)
+                if dir_name:
+                    os.makedirs(dir_name, exist_ok=True)
+                with open(path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+        except requests.exceptions.RequestException as e:
+            # remove partial file if exists
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                except Exception:
+                    pass
+            if self.debug:
+                print(f"Erreur pendant le téléchargement du clip {path}: {e}")
+            return
+
     def _normalize_url(self, url, base_page):
 
         """
@@ -153,14 +145,16 @@ class TwitchAPI():
             return urljoin(base_page, url)
         return url
 
-    def downloadClip(self, clip, path): # clip est le dictionnaire renvoyé dans le json
+    def downloadClip(self, clip, dir_path): # clip est le dictionnaire renvoyé dans le json
         #print(clip)  # enlever
         # récupération des variables
         url=None
         try:
-            url = self.extract_direct_video_url(self, clip['url'])
+            # correct call: extract_direct_video_url expects a page_url string
+            url = self.extract_direct_video_url(clip['url'])
         except ValueError as e:
-            print(f"Erreur: {e}")
+            if self.debug:
+                print(f"Erreur: {e}")
             return
         date = clip['created_at']
         streamer = clip['broadcaster_name']
@@ -169,7 +163,7 @@ class TwitchAPI():
         nomclip = streamer.replace('_',' ') + "_" + titre.replace('/', '|').replace('_',' ') + "_" + date + "_" + str(duration) + "_.mp4"
 
         # chemins relatifs au projet (utilise base_dir pour être cohérent avec upload.py)
-        already_file = os.path.join(path, 'already_downloaded.txt')
+        already_file = os.path.join(dir_path, 'already_downloaded.txt')
 
         # vérif que le clip n'existe pas déjà
         if os.path.exists(already_file):
@@ -185,25 +179,10 @@ class TwitchAPI():
         print("téléchargement du clip " + titre + " (" + streamer + ")")
 
         # téléchargement en streaming et écriture en morceaux pour éviter les fichiers partiels
-        try:
-            with requests.get(url, stream=True, timeout=30) as r:
-                r.raise_for_status()
-                target_path = os.path.join(path, nomclip)
-                # ensure destination directory exists
-                os.makedirs(path, exist_ok=True)
-                with open(target_path, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        if chunk:
-                            f.write(chunk)
-        except requests.exceptions.RequestException as e:
-            # remove partial file if exists
-            if 'target_path' in locals() and os.path.exists(target_path):
-                try:
-                    os.remove(target_path)
-                except Exception:
-                    pass
-            print(f"Erreur pendant le téléchargement du clip {titre}: {e}")
-            return
+        target_path = os.path.join(dir_path, nomclip)
+
+        # use instance method
+        self.download_video(url, target_path)
 
         # ajout à la liste des déjà téléchargés
         try:
