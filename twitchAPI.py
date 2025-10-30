@@ -79,6 +79,9 @@ class TwitchAPI():
         """
         if self.debug:
             print("Searching for a video in the url : " + page_url)
+        
+        clip_slug=page_url.split('/')[-1]
+
         s = requests.Session()
         # Use provided headers (e.g. Authorization/Client-Id) if present
         if headers:
@@ -86,21 +89,27 @@ class TwitchAPI():
         # Use a common browser UA to avoid basic bot blocks
         s.headers.setdefault('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36')
 
-        resp = s.get(page_url, timeout=timeout)
+        resp = s.get(f"https://clips.twitch.tv/embed?clip={clip_slug}&parent=ydrolics.fr", timeout=timeout)
         resp.raise_for_status()
         html = resp.text
+        
         if self.debug:
-            print(html)
+            try:
+                with open('test.html', 'w', encoding='utf-8') as f:
+                    f.write(html.replace('>', '>\n'))
+                print("Saved HTML to test.html")
+            except Exception as e:
+                print(f"Failed to save HTML: {e}")
 
         #simply use only re module to search for video url:
         videotag = None
         #videotags = re.search("<video .*\></video>", html)
-        videotags = re.search("https://", html)
+        videotags = re.search("https://production.assets.clips.twitchcdn.net/", html)
         if self.debug:
             print("found videos html tag :" + str(videotags))
         videotag = videotags[0]
         if videotag:
-            url = videotag.split('"')[5]
+            url = videotag
             return url
         else:
             return ValueError("No video found")

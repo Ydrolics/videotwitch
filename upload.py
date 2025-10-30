@@ -188,9 +188,21 @@ def makeclips(input_path, output_path):
     if debug:
         print("All videos edited !!!\n")
 
+def run():
+    twitch_authenticate()
+    for clip in get_clips(10):
+        twapi().downloadClip(clip, dir_to_edit)
+    
+    makeclips(dir_to_edit, dir_to_upload)
+
+    upload_all()
+
 if __name__ == "__main__":
     # Instantiate TwitchAPI and call instance method. Avoid passing the class as 'self'.
-    tw = twapi()
-    test_url = 'https://clips.twitch.tv/embed?clip=GracefulVenomousFrogFrankerZ-Da8y1OoN2g19G2r-&parent=meta.tag'
-    tw.download_video(test_url, os.path.join(dir_to_edit, "test.mp4"))
+    #tw = twapi()
+    #test_url = 'https://clips.twitch.tv/embed?clip=GracefulVenomousFrogFrankerZ-Da8y1OoN2g19G2r-&parent=ydrolics.fr'
+    #test_url='https://production.assets.clips.twitchcdn.net/v2/media/GracefulVenomousFrogFrankerZ-Da8y1OoN2g19G2r-/ea094aaa-2b17-4d99-9719-b4141646a9d6/video-1080.mp4?token=%7B%22authorization%22%3A%7B%22forbidden%22%3Afalse%2C%22reason%22%3A%22%22%7D%2C%22clip_uri%22%3A%22%22%2C%22clip_slug%22%3A%22GracefulVenomousFrogFrankerZ-Da8y1OoN2g19G2r-%22%2C%22device_id%22%3A%22ZPCwJJnNCdi0D5YD5HLkYFn7Ox7fIHvc%22%2C%22expires%22%3A1761887124%2C%22user_id%22%3A%22124075395%22%2C%22version%22%3A3%7D&sig=603d5d9d09137ab070766506e4570df36caf8e19'
+    #tw.download_video(test_url, os.path.join(dir_to_edit, "test.mp4"))
+
+    run()
 
